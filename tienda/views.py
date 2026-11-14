@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.db.models import Q
 from rest_framework.authtoken.models import Token
 from .models import Producto, Categoria, Pedido, DetallePedido, Consulta
-from .forms import ConsultaForm, UserUpdateForm, ProductoForm
+from .forms import ConsultaForm, UserCreateForm, UserUpdateForm, ProductoForm
 
 
 # ============================================================
@@ -76,28 +76,15 @@ def registrarse(request):
     if request.user.is_authenticated:
         return redirect('inicio')
 
-    if request.method == 'GET':
-        return render(request, 'registrarse.html', {'form': UserCreationForm()})
-    else:
-        if request.POST['password1'] == request.POST['password2']:
-            try:
-                user = User.objects.create_user(
-                    username=request.POST['username'],
-                    password=request.POST['password1'],
-                    email=request.POST.get('email', ''),
-                )
-                user.save()
-                # Crear token automáticamente
-                Token.objects.get_or_create(user=user)
-                login(request, user)
-                messages.success(request, f'¡Bienvenido {user.username}! Tu cuenta fue creada correctamente.')
-                return redirect('inicio')
-            except Exception:
-                messages.error(request, 'El nombre de usuario ya existe. Elegí otro.')
-                return render(request, 'registrarse.html', {'form': UserCreationForm()})
-        else:
-            messages.error(request, 'Las contraseñas no coinciden.')
-            return render(request, 'registrarse.html', {'form': UserCreationForm()})
+    form = UserCreateForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        Token.objects.get_or_create(user=user)
+        login(request, user)
+        messages.success(request, f'¡Bienvenido {user.username}! Tu cuenta fue creada correctamente.')
+        return redirect('inicio')
+
+    return render(request, 'registrarse.html', {'form': form})
 
 
 def loguearse(request):

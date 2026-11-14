@@ -1,7 +1,22 @@
 
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import Consulta, Producto
+
+
+class UserCreateForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'tu@email.com',
+        }),
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ('username', 'email')
 
 
 class ConsultaForm(forms.ModelForm):
@@ -23,12 +38,16 @@ class ConsultaForm(forms.ModelForm):
 
 
 class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control'}),
+    )
+
     class Meta:
         model = User
         fields = ['username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff']
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
